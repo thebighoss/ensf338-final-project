@@ -1,5 +1,5 @@
 import numpy as np
-import heapq
+import heapq  ## THIS NEEDS OT BE A PYTHON IMPLEMENTAION
 import itertools
 
 class node:
@@ -35,14 +35,14 @@ class graph:
     id_name_pair = {}
 
     def __init__(self):
-        self.nodes = []        # fix: must be instance variable, not class variable
+        self.nodes = []       
         self.id_name_pair = {}
         self.total_nodes = 0
 
     def append_node(self, n: node):
         n.id = self.total_nodes
-        self.nodes.append(n)               # fix: was self.nodes.append() with no argument
-        self.id_name_pair[n.name] = n.id   # fix: was overwriting dict instead of adding to it
+        self.nodes.append(n)              
+        self.id_name_pair[n.name] = n.id   
         self.total_nodes += 1
 
     def get_node_id(self, name: str):
@@ -63,12 +63,11 @@ class graph:
         g_score[start] = 0
         came_from = {}
 
-        counter = itertools.count()  # unique sequence number
-        open_set = [(h(start), next(counter), start)]  # (f, tie-breaker, node)
+        counter = itertools.count()  
+        open_set = [(h(start), next(counter), start)]  
 
         while open_set:
-            _, _, current = heapq.heappop(open_set)  # unpack 3 values now
-
+            _, _, current = heapq.heappop(open_set) 
             if current == end:
                 path = []
                 while current in came_from:
