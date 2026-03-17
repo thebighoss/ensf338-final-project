@@ -9,6 +9,7 @@ class request_pipeline:
         current_function = self.buffer.pop()
         if current_function != None:
             current_function()
+            print("dequeWorked")
         else:
             print("que Empty")
             return None

@@ -4,6 +4,11 @@ import random as rd
 import main
 import room_booking
 import request_pipeline as rp
+import threading
+import time
+#Globals
+request_pipeline = rp.request_pipeline()
+
 ## Dummy Vars
 building_list = {}
 building_name_list = ["TFDL","ENG","ICT","SCA","SCB","SCT","MUFR","ADM","HSKYN","MAC"]
@@ -29,25 +34,6 @@ campus.buildings = dict(building_list)
 
 return_val = main.room_finder(campus,4,23,building_name="ENG")
 test_bookingSystem = return_val[2].bookings
-print(return_val[0].name)
-
-print(return_val[1])
-print(return_val[2].bookings)
-request_pipeline = rp.request_pipeline()
-
-test_booking = room_booking.user_booking(535,"TEST", 12.5,"Dummy Comment")
-test_booking1 = room_booking.user_booking(535,"TEST2", 12.5,"Dummy Comment")
-test_booking2 = room_booking.user_booking(535,"TEST3", 13,"Dummy Comment")
-request_pipeline.enque_function(lambda :return_val[2].bookings.book_room(3,test_booking))
-request_pipeline.enque_function(lambda :return_val[2].bookings.book_room(4,test_booking1))
-request_pipeline.enque_function(lambda :return_val[2].bookings.book_room(5,test_booking2))
-request_pipeline.enque_function(lambda :return_val[2].bookings.print_daily_booking(3,0,15))
-request_pipeline.enque_function(lambda :return_val[2].bookings.print_daily_booking(4,0,15))
-request_pipeline.enque_function(lambda :return_val[2].bookings.print_daily_booking(5,0,15))
-
-while request_pipeline.buffer.items > 0:
-    request_pipeline.deque_function() 
-    pass
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def time_slots():
@@ -219,10 +205,10 @@ class RoomLookupPage(tk.Frame):
         if results is None:
             self.feedback.config(text="Invalid Result Contact An Adult", fg="red")
             return
-
         # Clear table
         for row in self.tree.get_children():
             self.tree.delete(row)
+
 
         match results[0]:
             case 2:
@@ -301,10 +287,14 @@ class RoomLookupPage(tk.Frame):
         print(vals)
         results = main.room_finder(campus,floor,room,building)
         temp_user_booking = room_booking.user_booking(rd.randint(0,10),"A dummy name",(float)(vals[0]),"Dummy Comments")
-        result = results[2].bookings.book_room(day,temp_user_booking)
-        if result == None:
-            print("room Already Booked")
-        self._search()
+        def book_closure(self,fn):
+            fn()
+            self._search()
+        if single_block:
+            request_pipeline.enque_function(lambda:book_closure(self,lambda:results[2].bookings.book_room(day,temp_user_booking.id,temp_user_booking.name,temp_user_booking.time,temp_user_booking.comments)))
+        else:
+            result = results[2].bookings.book_room(day,temp_user_booking.id,temp_user_booking.name,temp_user_booking.time,temp_user_booking.comments)
+            self._search()
 
     def _delete_selected(self):
         selected = self.tree.focus()
@@ -341,11 +331,16 @@ class RoomLookupPage(tk.Frame):
         # Clear table
         print(vals)
         results = main.room_finder(campus,floor,room,building)
-        temp_user_booking = room_booking.user_booking(rd.randint(0,10),"A dummy name",(float)(vals[0]),"Dummy Comments")
-        result = results[2].bookings.delete_booking(day,temp_user_booking)
-        if result == None:
-            print("room Already Booked")
-        self._search()
+        global single_block
+        def delete_closure(self,FN):
+            FN()
+            self._search()
+
+        if single_block:
+            request_pipeline.enque_function(lambda:delete_closure(self,lambda:results[2].bookings.delete_booking(day,(float)(vals[0]))))
+        else:
+            result = results[2].bookings.delete_booking(day,(float)(vals[0]))
+            self._search()
 
 
 
@@ -386,6 +381,51 @@ class NavigationPage(tk.Frame):
         else:
             self.feedback.config(text=f"Route requested: {start} -> {end}")
 
+class PendingRequestsPage(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._build()
+
+    def _build(self):
+        tk.Label(self, text="Pending Requests",
+                 font=("Helvetica", 14, "bold")).pack(pady=(12, 8))
+
+        btn_row = tk.Frame(self)
+        btn_row.pack(fill="x", padx=12, pady=(0, 8))
+        tk.Button(btn_row, text="Process Next", command=self._process_next).pack(side="left")
+        tk.Button(btn_row, text="Refresh", command=self._refresh).pack(side="left", padx=(8, 0))
+        self.feedback = tk.Label(btn_row, text="")
+        self.feedback.pack(side="left", padx=10)
+
+        table_frame = tk.Frame(self)
+        table_frame.pack(fill="both", expand=True, padx=12, pady=(0, 8))
+
+        self.tree = ttk.Treeview(table_frame, columns=("#", "Caller"),
+                                 show="headings", selectmode="browse")
+        self.tree.heading("#", text="#")
+        self.tree.heading("Caller", text="Caller")
+        self.tree.column("#", width=60, anchor="center")
+        self.tree.column("Caller", width=200, anchor="center")
+
+        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vsb.set)
+        self.tree.pack(side="left", fill="both", expand=True)
+        vsb.pack(side="right", fill="y")
+
+    def _refresh(self):
+        self.tree.pack_forget()
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        for i in range(request_pipeline.buffer.items):
+            self.tree.insert("", "end", values=(request_pipeline.buffer.items-i, "Unknown"))
+        self.tree.pack(side="left", fill="both", expand=True)
+        self.tree.column("#", width=60, anchor="center")
+        self.tree.column("Caller", width=200, anchor="center")
+        self.feedback.config(text=f"{request_pipeline.buffer.items} item(s) in queue.")
+
+    def _process_next(self):
+        print(request_pipeline.deque_function())
+        self._refresh()
 
 class PlaceholderPage(tk.Frame):
     def __init__(self, parent, title):
@@ -400,7 +440,6 @@ class PlaceholderPage(tk.Frame):
 class App(tk.Tk):
     NAV_BUTTONS = [
         "Room/Event Lookup",
-        "Find Building",
         "Route History",
         "Pending Requests",
         "Service Requests",
@@ -410,7 +449,6 @@ class App(tk.Tk):
         super().__init__()
         self.title("Campus Navigator")
         self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
-
         self._pages    = {}
         self._nav_btns = {}
 
@@ -438,10 +476,18 @@ class App(tk.Tk):
             navbar.columnconfigure(i, weight=1)
             self._nav_btns[label] = btn
 
+        btn = tk.Button(navbar, text="Enable Single Block", wraplength=200,
+                        command=lambda: self._toggle_single_block())
+        btn.grid(row=0, column=i, sticky="nsew", padx=2, pady=4)
+        navbar.columnconfigure(i, weight=1)
+        self.single_block_btn = btn
+        self.default_btn_bg = btn.cget("bg")  # save default ONCE before any changes
+
+
     def _build_pages(self):
         self._pages["Navigation"]        = NavigationPage(self.container)
         self._pages["Room/Event Lookup"] = RoomLookupPage(self.container)
-
+        self._pages["Pending Requests"] = PendingRequestsPage(self.container)
         for name in self.NAV_BUTTONS:
             if name not in self._pages:
                 self._pages[name] = PlaceholderPage(self.container, name)
@@ -455,8 +501,28 @@ class App(tk.Tk):
             page.lift()
         for label, btn in self._nav_btns.items():
             btn.config(relief="sunken" if label == name else "raised")
+    def _toggle_single_block(self):
+        global single_block
+        single_block = not single_block
+        color = "red" if single_block else self.default_btn_bg
+        self.single_block_btn.config(
+            relief="sunken" if single_block else "raised",
+            bg=color,
+            activebackground=color
+        )
 
+def single_block_handler(request_pipeline,app):
+    global single_block
+    while(1):
+        if not(single_block):
+            print(request_pipeline.deque_function())
+            print("test")
+        time.sleep(2)
 
 if __name__ == "__main__":
+    global single_block
+    single_block = False
     app = App()
+    single_block_thread = threading.Thread(target=lambda:single_block_handler(request_pipeline,app))
+    single_block_thread.start()
     app.mainloop()

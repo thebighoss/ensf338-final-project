@@ -18,23 +18,27 @@ class daily_booking:
         pass
     def add_booking(self,user_booking:user_booking):
         if self.buffer[(int)(np.floor(user_booking.time * 2))] != None:
+            print("room Already Booked")
             return None   
         self.buffer[(int)(np.floor(user_booking.time * 2))] = user_booking
         return (int)(np.floor(user_booking.time * 2))
 
-    def remove_booking(self,user_booking:user_booking):
-        if self.buffer[(int)(np.floor(user_booking.time * 2))] == None:
+    def remove_booking(self,time):
+        if self.buffer[(int)(np.floor(time * 2))] == None:
+            print("No Booking Exists")
             return None   
-        self.buffer[(int)(np.floor(user_booking.time * 2))] = None
-        return (int)(np.floor(user_booking.time * 2))
+        self.buffer[(int)(np.floor(time * 2))] = None
+        return (int)(np.floor(time * 2))
 
-    def get_booking_with_user_booking(self,user_booking:user_booking):
+    def get_booking_with_user_booking(self,user_booking):
         if self.buffer[(int)(np.floor(user_booking.time * 2))] != None:
+            print("No Booking exists")
             return None   
         return self.buffer[(int)(np.floor(user_booking.time * 2))]
 
     def get_booking_with_time(self,time):
         if self.buffer[(int)(np.floor(time * 2))] != None:
+            print("No Booking Exists")
             return None   
         return self.buffer[(int)(np.floor(time * 2))]
     def get_all_bookings(self):
@@ -45,16 +49,17 @@ class booking_system:
         self.buffer = lifo.ring_buffer(size,daily_booking)
         pass
 
-    def book_room(self,day,user_booking:user_booking):
+    def book_room(self,day,id,name,time,comments):
+        temp_user_booking = user_booking(id,name,time,comments)
         if day > self.buffer.capacity:
             print("The System Can Only Book ",self.buffer.capacity," Days In The Future")
             return None
         buffer_cell:daily_booking = self.buffer.access_at_index(day)
-        return buffer_cell.add_booking(user_booking)
+        return buffer_cell.add_booking(temp_user_booking)
     
-    def delete_booking(self,day,user_booking:user_booking):
+    def delete_booking(self,day,time):
         buffer_cell:daily_booking = self.buffer.access_at_index(day)
-        return buffer_cell.remove_booking(user_booking)
+        return buffer_cell.remove_booking(time)
     
     def get_daily_booking(self,day,start_time:float = 0.0,end_time:float = 24.0):
         if start_time == None:
@@ -72,10 +77,8 @@ class booking_system:
         for i in range((int)(np.round(start_time*2)),(int)(np.round(end_time*2))):
             if type(all_bookings[i]) == user_booking:
                 return_val.append(all_bookings[i])
-                print("Day : ",day," - Time :",all_bookings[i].time," Is Booked By : ",all_bookings[i].name,)
             else:
                 return_val.append(user_booking(None,None,i/2,""))
-                print("Day : ",day," - Time :",i/2, " Is Open")
                 pass
         return return_val
     def print_daily_booking(self,day,start_time:float = 0.0,end_time:float = 24.0):
