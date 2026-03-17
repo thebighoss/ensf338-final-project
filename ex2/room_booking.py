@@ -48,23 +48,26 @@ class booking_system:
             return None
         buffer_cell:daily_booking = self.buffer.access_at_index(day)
         buffer_cell.add_booking(user_booking)
-    def print_daily_booking(self,day):
+    def print_daily_booking(self,day,start_time:float = 0.0,end_time:float = 24.0):
         buffer_cell:daily_booking = self.buffer.access_at_index(day)
         all_bookings = buffer_cell.get_all_bookings()
-        for i in range(len(all_bookings)):
-            if type(i) == user_booking:
-                print("Name :",all_bookings[i].name," Time :",all_bookings[i].time)
+        for i in range((int)(np.round(start_time*2)),(int)(np.round(end_time*2))):
+            if type(all_bookings[i]) == user_booking:
+                print("Day : ",day," - Time :",all_bookings[i].time," Is Booked By : ",all_bookings[i].name,)
             else:
-                print("Time :",i/2, " Is Open")
+                print("Day : ",day," - Time :",i/2, " Is Open")
                 pass
 
 
+if True:
+    test_bookingSystem = booking_system(90)
 
-test_bookingSystem = booking_system(90)
-test_booking = user_booking(535,"TEST", 12.5,"Dummy Comment")
-test_booking1 = user_booking(535,"TEST2", 12.5,"Dummy Comment")
-test_booking2 = user_booking(535,"TEST3", 13,"Dummy Comment")
-test_bookingSystem.book_room(10,test_booking)
-test_bookingSystem.book_room(10,test_booking1)
-test_bookingSystem.book_room(10,test_booking2)
-test_bookingSystem.print_daily_booking(10)
+    test_booking = user_booking(535,"TEST", 12.5,"Dummy Comment")
+    test_booking1 = user_booking(535,"TEST2", 12.5,"Dummy Comment")
+    test_booking2 = user_booking(535,"TEST3", 13,"Dummy Comment")
+    test_booking2 = user_booking(535,"TEST3", 23.5,"Dummy Comment")
+    test_bookingSystem.book_room(5,test_booking)
+    test_bookingSystem.book_room(5,test_booking1)
+    test_bookingSystem.book_room(5,test_booking2)
+    test_bookingSystem.print_daily_booking(5)
+    test_bookingSystem.print_daily_booking(10)

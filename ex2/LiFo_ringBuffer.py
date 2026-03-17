@@ -3,12 +3,9 @@ This implementaion can only store 1 type of data'''
 
 
 class ring_buffer:
-    capacity= 0
-    items = 0
-    index = 0
-    data_type = None
-    buffer = []
     def __init__(self,capacity,data_type):
+        self.buffer = []
+        self.data_type = None
         self.data_type = data_type
         self.capacity = capacity
         for i in range(capacity):
