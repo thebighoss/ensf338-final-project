@@ -17,18 +17,20 @@ class ring_buffer:
         self.items = 0
         pass
 
-    def append(self,data):
+    def append_buffer(self,data):
         if self.items < self.capacity:
             self.items += 1 
+        self.index += 1
         self.index %= self.capacity
         self.buffer[self.index] = data
 
     def pop(self):
         if self.items>0:
+            return_value = self.buffer[self.index]
             self.items -= 1
             self.index -= 1
             self.index %= self.capacity
-            return(self.buffer[self.index])
+            return(return_value)
         else:
             return None
 

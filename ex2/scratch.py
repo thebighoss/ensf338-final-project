@@ -19,7 +19,7 @@ class node:
 def get_node_vector(origin_node: node, target_node: node):
     distance = np.sqrt((origin_node.x - target_node.x)**2 + (origin_node.y - target_node.y)**2)  # fix: missing **2
     angle = np.arctan2((origin_node.y - target_node.y), (origin_node.x - target_node.x)) * (180 / np.pi)
-    return distance
+    return [distance, angle]
 
 
 def link_node(node_1: node, node_2: node):
@@ -34,7 +34,7 @@ class graph:
         self.nodes = []       
         self.id_name_pair = {}
         self.total_nodes = 0
-        self.undo_buffer = undo.ring_buffer(10,list)
+        self.undo_buffer = undo.ring_buffer(10,node)
 
     def append_node(self, n: node):
         n.id = self.total_nodes
@@ -69,11 +69,11 @@ class graph:
                     path.append(current)
                     current = came_from[current]
                 path.append(start)
-                self.undo_buffer.append_buffer(list(reversed(path)))
+                self.undo_buffer.append(list(reversed(path)))
                 return list(reversed(path))
 
             for neighbour in current.linked_nodes:
-                edge_cost = get_node_vector(current, neighbour)
+                edge_cost = get_node_vector(current, neighbour)[0]
                 tentative_g = g_score[current] + edge_cost
 
                 if tentative_g < g_score[neighbour]:
@@ -99,16 +99,11 @@ g.node_linker(0, [1, 2])   # A -> B, A -> C
 g.node_linker(1, [3])      # B -> D
 g.node_linker(2, [3])      # C -> D
 
-
-
 path = g.find_path(0, 3)
-if True: 
-    path = g.find_path(0, 2)
-    path = g.find_path(0, 1)
-    path = g.find_path(0, 1)
-    path = g.find_path(0, 1)
-    path = g.find_path(0, 0)
-#print(g.undo_buffer.peak())
-while g.undo_buffer.items > 0:
+path = g.find_path(0, 2)
+path = g.find_path(0, 1)
+path = g.find_path(0, 3)
+path = g.find_path(0, 1)
+path = g.find_path(0, 2)
+while g.undo_buffer.items:
     print([n.name for n in g.undo_buffer.pop()])  # ['A', 'C', 'D']
-
