@@ -9,10 +9,10 @@ class ring_buffer:
     data_type = None
     buffer = []
     def __init__(self,capacity,data_type):
-        self.data_type = type(data_type)
+        self.data_type = data_type
         self.capacity = capacity
         for i in range(capacity):
-            self.buffer.append(None)
+            self.buffer.append(data_type())
         self.index = capacity
         self.items = 0
         pass
@@ -39,3 +39,8 @@ class ring_buffer:
             return(self.buffer[self.index])
         else:
             return None
+        
+    def access_at_index(self,index):
+        if index > self.capacity:
+            return None
+        return self.buffer[(self.index + index )% self.capacity]
