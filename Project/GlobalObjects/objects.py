@@ -36,6 +36,7 @@ class Building:
         self.bid = bid
         self.floors = []
         self.node = tv.node(bid,location.x_position,location.y_position)
+        self.services = None
  
 class Service:
     def __init__(self, name, buildings):
@@ -282,6 +283,7 @@ class Campus:
         for sname, bids in services_data:
             self.services[sname] = Service(sname, [self.buildings[b] for b in bids])
 
+
     def init_graph(self):
         for i in self.pathways:
             self.campus_graph.append_node(i.node)
@@ -452,14 +454,6 @@ class Campus:
 
         
 
-        
-camp = Campus();
-
-path = (camp.campus_graph.find_path(camp.campus_graph.get_node_id("AB"),camp.campus_graph.get_node_id("ENA")))
-
-tv.draw_graph(path,"Project\\GlobalObjects\\UCalgary-Main_Campus_Map-20230724.png")
-for i in path:
-    print(i.id)
 
 
 
@@ -467,58 +461,3 @@ for i in path:
 
 
 
-
-
-
-
-
-
-
-
-#Building Helping Functions
-def find_floor(building:Building,floor_number) -> Floor:
-    floor_number = (int)(floor_number)
-    return building.floors[floor_number]
-#Floor Helper Funcitons
-def find_room(floor : Floor,room_number) -> Room:
-    room_number = (int)(room_number)
-    return floor.rooms[room_number]
-#Campus Helper Functions    
-def find_building(campus:Campus,building_name:str= None,building_id:int = None) -> Building:
-    if building_id != None:
-        return campus.buildings.values(building_id)
-    elif building_name != None:
-        return campus.buildings[building_name]
-
-def room_finder(campus:Campus,floor_number:int = None, room_number :int = None,building_name:str= None,building_id:int = None) -> list:
-    floor = None
-    room = None
-    building = find_building(campus=campus,building_name=building_name,building_id=None)
-    if floor_number != None:
-        floor = find_floor(building,floor_number=floor_number)
-        if room_number != None:
-            room = find_room(floor,room_number=room_number)
-    return [building,floor,room]
-
-
-if False:
-    room_types = ["Study","Confrense","Meeting","Lecture"]
-
-    building_list = {}
-    building_name_list = ["TFDL","ENG","ICT","SCA","SCB","SCT","MUFR","ADM","HSKYN","MAC"]
-    building_count = 10
-
-    floor_list = [] 
-    floor_count = 15
-    room_count = 40
-    for k in range(building_count):
-        building_list[building_name_list[k]] = (Building(k,building_name_list[k],building_name_list[k],[0,0]))
-        for j in range(floor_count):
-            building_list[building_name_list[k]].floors.append(Floor())
-            floor_list.append(Floor())
-            for i in range(room_count):
-                building_list[building_name_list[k]].floors[j].rooms.append(Room(rd.randint(0,30),room_types[rd.randint(0,len(room_types)-1)]))
-    for i in (building_list):
-        print(i)
-    campus = Campus()
-    campus.buildings = dict(building_list)

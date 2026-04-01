@@ -133,8 +133,12 @@ def build_booking_page(parent):
         for booking in campus.get_bookings(selected_building,selected_floor,selected_room,selected_day,selected_start,selected_end):
             table.insert("", "end", values=(booking.booking_type, booking.booker_name, booking.start_time, booking.end_time))           
 
-
-
+    def building_info(*args):
+        selected_building = building_var.get()
+        campus.get_buildings(selected_building)
+        mb.showinfo("Building Info", f"Dates Have Cannot Be More Than 90 Days In The Future")
+    def room_info(*args):
+        pass
     building_var = tk.StringVar(value="Building")
     building_var.trace_add("write", refresh_floor_dd)
     building_dd =tk.OptionMenu(dd_frame, building_var, *campus.get_building_keys())
@@ -179,6 +183,10 @@ def build_booking_page(parent):
 
 
     tk.Button(dd_frame, text="Submit", command=refresh_table).pack(side="left")
+
+    tk.Button(dd_frame, text="Room Info", command=room_info).pack(side="left")
+    tk.Button(dd_frame, text="Building Info", command=building_info).pack(side="left")
+
   
     # --- Table ---
     cols = ("Booked For", "Booked By", "Start Time", "End Time")
@@ -299,7 +307,7 @@ def build_nav_page(parent):
             mb.showinfo("Navigation Error", f"Start and End cannot be same place")
             return
         path,steps = campus.campus_graph.find_path_steps(campus.campus_graph.get_node_id(start_var.get()),campus.campus_graph.get_node_id(end_var.get()))
-        closure = tv.animate_search(campus.campus_graph.nodes, steps, "C:\\Users\\Dave\\Documents\\ensf338-final-project\\Project\\GUI\\img\\UCalgary-Main_Campus_Map-20230724.png")
+        closure = tv.animate_search(campus.campus_graph.nodes, steps, "Project\\GUI\\img\\UCalgary-Main_Campus_Map-20230724.png")
         undo_closure = lambda : campus.campus_graph.undo_buffer.append(closure)
         request_pipeline.enque_request(closure,lambda:None,"Navigation Rendering")
         request_pipeline.enque_request(undo_closure,lambda:None,"Navigation Undo Enqueing")
