@@ -856,33 +856,55 @@ def build_request_processing_page(parent: tk.Frame) -> tk.Frame:
         _log(f"Processed all {count} remaining requests." if count else "Queue was already empty.", "ts")
         refresh_table()
 
-    def _demo_step(remaining: int):
+    def _demo_step(remaining: int, saved_mode: str):
         if remaining <= 0 or request_pipeline.buffer.get_len() == 0:
             _demo_running[0] = False
-            _log("─── Demo complete ───", "ts")
+            # Restore the pipeline mode that was active before the demo
+            global pipeline_mode
+            pipeline_mode = saved_mode
+            mode_label.config(text=f"Pipeline: {pipeline_mode}")
+            _log(f"─── Demo complete — pipeline restored to '{saved_mode}' mode ───", "ts")
             refresh_table()
             return
         request_pipeline.deque_request()
         refresh_table()
-        page.after(250, lambda: _demo_step(remaining - 1))
+        page.after(250, lambda: _demo_step(remaining - 1, saved_mode))
 
     def run_demo():
+        global pipeline_mode
         if _demo_running[0]:
             _log("Demo already running – please wait.", "ts")
             return
         log_box.configure(state="normal")
         log_box.delete("1.0", "end")
         log_box.configure(state="disabled")
-        _log("═══ Starting Pipeline Demo (23 requests) ═══", "ts")
+        # Switch to Manual so the auto-drainer doesn't consume requests
+        saved_mode = pipeline_mode
+        pipeline_mode = "Manual"
+        mode_label.config(text="Pipeline: Manual")
+        _log("═══ Starting Pipeline Demo (22 requests) ═══", "ts")
+        _log(f"Pipeline switched to Manual (was {saved_mode}) — requests will not auto-drain.", "ts")
         _enqueue_demo_requests()
         _demo_running[0] = True
-        page.after(300, lambda: _demo_step(len(_DEMO_REQUESTS)))
+        page.after(300, lambda: _demo_step(len(_DEMO_REQUESTS), saved_mode))
+
+    def load_dummies():
+        global pipeline_mode
+        if _demo_running[0]:
+            _log("Demo is currently running. Wait for it to finish.", "ts")
+            return
+        pipeline_mode = "Manual"
+        mode_label.config(text="Pipeline: Manual")
+        _log("═══ Loading Dummy Data ═══", "ts")
+        _log("Pipeline switched to Manual — you can now process requests manually.", "ts")
+        _enqueue_demo_requests()
 
     # ── Buttons ────────────────────────────────────────────────────────────────
-    styled_button(ctrl_bar, "🚀  Run Demo",     run_demo,      variant="primary").pack(side="left", padx=4)
-    styled_button(ctrl_bar, "▶  Process Next",  process_next,  variant="default").pack(side="left", padx=4)
-    styled_button(ctrl_bar, "⏩  Process All",   process_all,   variant="default").pack(side="left", padx=4)
-    styled_button(ctrl_bar, "⟳  Refresh",       refresh_table, variant="default").pack(side="left", padx=4)
+    styled_button(ctrl_bar, "🚀  Run Demo",       run_demo,      variant="primary").pack(side="left", padx=4)
+    styled_button(ctrl_bar, "📥  Load Dummies",  load_dummies,  variant="default").pack(side="left", padx=4)
+    styled_button(ctrl_bar, "▶  Process Next",   process_next,  variant="default").pack(side="left", padx=4)
+    styled_button(ctrl_bar, "⏩  Process All",    process_all,   variant="default").pack(side="left", padx=4)
+    styled_button(ctrl_bar, "⟳  Refresh",        refresh_table, variant="default").pack(side="left", padx=4)
 
     return page
 
