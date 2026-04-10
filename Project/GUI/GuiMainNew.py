@@ -21,7 +21,7 @@ import DataStructures.AVL as avl
 # Platform scaling
 # ---------------------------------------------------------------------------
 IS_LINUX = platform.system() == "Linux"
-UI_SCALE = 0.82 if IS_LINUX else 1.0
+UI_SCALE = 0.82 if IS_LINUX else 1.5
 
 def sc(value: int) -> int:
     """Scale a pixel value for the current platform."""
