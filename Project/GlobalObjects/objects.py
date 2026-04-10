@@ -58,7 +58,7 @@ class Campus:
         self.init_graph()
         self.requests = requests
         self.lookup = avl.AVLTree()
-        self.service_queue = ServiceRequests()
+        self.service_queue = ServiceRequest()
         self.completed_services = []
 
     def get_building_keys(self):
